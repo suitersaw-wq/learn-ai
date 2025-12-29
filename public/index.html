@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learn AI - Your Personal AI Tutor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-bubble">
+    <div class="page-inner">
+      <div class="landing-container">
+        <header class="landing-header">
+          <h1>Learn AI</h1>
+          <p class="tagline">An AI tutor that adapts to how your brain works</p>
+        </header>
+
+        <main class="landing-main">
+          <div class="value-props">
+            <div class="value-prop bubble">
+              <div class="bubble-inner">
+                <span class="icon">🧠</span>
+                <h3>Psychology-First</h3>
+                <p>Built on cognitive science. Adapts to ADHD, anxiety, and different learning styles.</p>
+              </div>
+            </div>
+            <div class="value-prop bubble">
+              <div class="bubble-inner">
+                <span class="icon">⚡</span>
+                <h3>Personalized</h3>
+                <p>2 minutes to understand your brain. Every lesson optimized for you.</p>
+              </div>
+            </div>
+            <div class="value-prop bubble">
+              <div class="bubble-inner">
+                <span class="icon">🎯</span>
+                <h3>Actually Works</h3>
+                <p>Spaced repetition, active recall, metacognition. Research-backed techniques.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="cta-section">
+            <button id="start-btn" class="cta-button">
+              <span>Start Learning</span>
+            </button>
+            <p class="cta-subtext">2-minute setup, then learn anything</p>
+          </div>
+
+          <div class="how-it-works bubble">
+            <div class="bubble-inner">
+              <h2>How it works</h2>
+              <ol>
+                <li><strong>Create an account</strong> — Quick signup to save your progress</li>
+                <li><strong>Quick profile</strong> — Tell us how your brain works best</li>
+                <li><strong>Pick a topic</strong> — What do you want to learn?</li>
+                <li><strong>Learn your way</strong> — AI adapts to your style in real-time</li>
+              </ol>
+            </div>
+          </div>
+        </main>
+
+        <footer class="landing-footer">
+          <p>Built for humans who learn differently</p>
+        </footer>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const user = localStorage.getItem('learnai_user');
+    const hasProfile = localStorage.getItem('learnai_has_profile');
+
+    document.getElementById('start-btn').addEventListener('click', () => {
+      if (user && hasProfile) {
+        window.location.href = '/learn.html';
+      } else if (user) {
+        window.location.href = '/onboarding.html';
+      } else {
+        window.location.href = '/auth.html';
+      }
+    });
+
+    if (user && hasProfile) {
+      document.getElementById('start-btn').querySelector('span').textContent = 'Continue Learning';
+      document.querySelector('.cta-subtext').textContent = 'Welcome back';
+    } else if (user) {
+      document.getElementById('start-btn').querySelector('span').textContent = 'Complete Setup';
+      document.querySelector('.cta-subtext').textContent = 'Finish your profile';
+    }
+  </script>
+</body>
+</html>

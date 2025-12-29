@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learn AI - Choose Your Plan</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-bubble">
+    <div class="page-inner">
+      <div class="membership-container">
+        <div class="membership-header">
+          <h1>Choose Your Plan</h1>
+          <p class="tagline">Start free, upgrade anytime</p>
+        </div>
+
+        <div class="tiers-grid" id="tiers-grid">
+          <!-- Tiers will be loaded here -->
+        </div>
+
+        <p class="membership-footer">
+          <button class="skip-btn" id="skip-btn">Continue with Free</button>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem('learnai_user') || '{}');
+    if (!user.id) {
+      window.location.href = '/auth.html';
+    }
+
+    async function loadTiers() {
+      const res = await fetch('/api/membership/tiers');
+      const data = await res.json();
+
+      const grid = document.getElementById('tiers-grid');
+      grid.innerHTML = data.tiers.map(tier => `
+        <div class="tier-card bubble ${tier.id === 'pro' ? 'featured' : ''}">
+          <div class="bubble-inner">
+            ${tier.id === 'pro' ? '<span class="tier-badge">Most Popular</span>' : ''}
+            <h2 class="tier-name">${tier.name}</h2>
+            <div class="tier-price">
+              ${tier.price === 0 ? '<span class="price">Free</span>' : `
+                <span class="currency">$</span>
+                <span class="price">${tier.price}</span>
+                <span class="period">/month</span>
+              `}
+            </div>
+            <ul class="tier-features">
+              ${tier.features.map(f => `<li>${f}</li>`).join('')}
+            </ul>
+            <button class="tier-btn ${tier.id === 'free' ? 'secondary' : 'primary'}"
+                    data-tier="${tier.id}">
+              <span>${tier.id === 'free' ? 'Start Free' : 'Get ' + tier.name}</span>
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+      // Add click handlers
+      grid.querySelectorAll('.tier-btn').forEach(btn => {
+        btn.addEventListener('click', () => selectTier(btn.dataset.tier));
+      });
+    }
+
+    async function selectTier(tierId) {
+      try {
+        if (tierId !== 'free') {
+          // In a real app, this would go to Stripe checkout
+          alert('Payment integration coming soon! Starting with Free tier.');
+          tierId = 'free';
+        }
+
+        await fetch('/api/membership/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id, membership: tierId })
+        });
+
+        // Update local storage
+        user.membership = tierId;
+        localStorage.setItem('learnai_user', JSON.stringify(user));
+
+        // Go to onboarding
+        window.location.href = '/onboarding.html';
+      } catch (error) {
+        console.error('Error selecting tier:', error);
+        alert('Something went wrong. Please try again.');
+      }
+    }
+
+    document.getElementById('skip-btn').addEventListener('click', () => selectTier('free'));
+
+    loadTiers();
+  </script>
+</body>
+</html>

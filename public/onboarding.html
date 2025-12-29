@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learn AI - Setup</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-bubble">
+    <div class="page-inner">
+      <div class="onboarding-container">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress"></div>
+        </div>
+
+        <div class="question-container" id="question-container">
+        </div>
+
+        <div class="nav-buttons">
+          <button class="nav-btn" id="back-btn" disabled>Back</button>
+          <button class="nav-btn primary" id="next-btn">
+            <span>Next</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let questions = [];
+    let currentIndex = 0;
+    let answers = {};
+
+    const user = JSON.parse(localStorage.getItem('learnai_user') || '{}');
+    if (!user.id) {
+      window.location.href = '/auth.html';
+    }
+
+    async function loadQuestions() {
+      const res = await fetch('/api/onboarding/questions');
+      questions = await res.json();
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const q = questions[currentIndex];
+      const container = document.getElementById('question-container');
+      const progress = document.getElementById('progress');
+      const nextBtn = document.getElementById('next-btn');
+      const backBtn = document.getElementById('back-btn');
+
+      progress.style.width = `${((currentIndex + 1) / questions.length) * 100}%`;
+
+      backBtn.disabled = currentIndex === 0;
+      nextBtn.querySelector('span').textContent = currentIndex === questions.length - 1 ? 'Finish' : 'Next';
+
+      let html = `
+        <p class="question-number">Question ${currentIndex + 1} of ${questions.length}</p>
+        <h2 class="question-text">${q.question}</h2>
+      `;
+
+      if (q.type === 'text') {
+        html += `
+          <input type="text" class="text-input" id="text-answer"
+                 placeholder="${q.placeholder || ''}"
+                 value="${answers[q.id] || ''}">
+        `;
+      } else {
+        html += '<div class="options">';
+        q.options.forEach(opt => {
+          const isSelected = q.type === 'multiple'
+            ? (answers[q.id] || []).includes(opt.value)
+            : answers[q.id] === opt.value;
+
+          html += `
+            <div class="option ${isSelected ? 'selected' : ''}" data-value="${opt.value}">
+              <div class="option-inner">
+                <span class="emoji">${opt.emoji || ''}</span>
+                <span class="label">${opt.label}</span>
+              </div>
+            </div>
+          `;
+        });
+        html += '</div>';
+      }
+
+      container.innerHTML = html;
+
+      if (q.type === 'text') {
+        const input = document.getElementById('text-answer');
+        input.addEventListener('input', (e) => {
+          answers[q.id] = e.target.value;
+        });
+        input.focus();
+      } else {
+        container.querySelectorAll('.option').forEach(opt => {
+          opt.addEventListener('click', () => {
+            const value = opt.dataset.value;
+
+            if (q.type === 'multiple') {
+              if (!answers[q.id]) answers[q.id] = [];
+
+              // Handle 'none' exclusive selection
+              if (value === 'none') {
+                answers[q.id] = ['none'];
+              } else {
+                // Remove 'none' if selecting other options
+                const noneIdx = answers[q.id].indexOf('none');
+                if (noneIdx > -1) answers[q.id].splice(noneIdx, 1);
+
+                const idx = answers[q.id].indexOf(value);
+                if (idx > -1) {
+                  answers[q.id].splice(idx, 1);
+                } else {
+                  answers[q.id].push(value);
+                }
+              }
+            } else {
+              answers[q.id] = value;
+            }
+
+            renderQuestion();
+          });
+        });
+      }
+    }
+
+    document.getElementById('next-btn').addEventListener('click', async () => {
+      const q = questions[currentIndex];
+
+      if (q.type === 'text') {
+        if (!answers[q.id] || !answers[q.id].trim()) {
+          alert('Please enter a response');
+          return;
+        }
+      } else if (q.type === 'single') {
+        if (!answers[q.id]) {
+          alert('Please select an option');
+          return;
+        }
+      }
+
+      if (currentIndex < questions.length - 1) {
+        currentIndex++;
+        renderQuestion();
+      } else {
+        await submitOnboarding();
+      }
+    });
+
+    document.getElementById('back-btn').addEventListener('click', () => {
+      if (currentIndex > 0) {
+        currentIndex--;
+        renderQuestion();
+      }
+    });
+
+    async function submitOnboarding() {
+      try {
+        const res = await fetch('/api/onboarding/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id, answers })
+        });
+
+        if (!res.ok) throw new Error('Failed to save profile');
+
+        localStorage.setItem('learnai_has_profile', 'true');
+        window.location.href = '/learn.html';
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Something went wrong. Please try again.');
+      }
+    }
+
+    loadQuestions();
+  </script>
+</body>
+</html>

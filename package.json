@@ -1,0 +1,26 @@
+{
+  "name": "learn-ai",
+  "version": "1.0.0",
+  "description": "AI tutor that adapts to how your brain works",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "build": "echo 'No build step required'"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["ai", "learning", "tutor", "education"],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
+    "better-sqlite3": "^12.5.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "uuid": "^13.0.0"
+  }
+}
